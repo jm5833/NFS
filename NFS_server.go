@@ -50,34 +50,21 @@ func readFile(fname string, mode int){
 }
 
 func processCall(call string) {
-    cindex := strings.Index(call, "(")
-    if cindex == -1{
-        fmt.Println("Invalid syntax")
-        return
+    if len(call) <= 0{ return }
+    args := strings.Split(call, " ")
+    command := args[0]
+    switch command {
+        case "exit":
+            os.Exit(0)
+        case "read":
+            fname := args[1]
+            mode,err := strconv.Atoi(args[2])
+            if err != nil{
+                fmt.Println("Invalid mode")
+                return
+            }
+            readFile(fname,mode)
     }
-
-    command := call[:cindex]
-    args := strings.Split(call[cindex+1:len(call)-1], ",")
-    fmt.Println(args)
-
-    if command == "read"{
-        fname := args[0]
-        mode,err := strconv.Atoi(args[1])
-        if err != nil{
-            fmt.Println("Invalid mode")
-            return
-        }
-        readFile(fname,mode)
-    }else if command == "exit"{
-        os.Exit(0)
-    }
-    /*else if command == "write"{
-
-    }else if command == "create"{
-
-    }else{
-        fmt.Println("invalid command")
-    }*/
 }
 
 //starter function
