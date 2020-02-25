@@ -22,15 +22,34 @@ import (
     write   2
     execute 4
 */
-func ReadFile(fname string, mode int){
-    file,err := os.OpenFile(fname, mode, 0755)
-    if err != nil{
-        fmt.Println(err)
-        return
+func errorCheck(e error) bool {
+    if e != nil{
+        fmt.Println(e)
+        return true
     }
-    fmt.Println(file.Read())
+    return false
 }
-func ProcessCall(call string) {
+
+func readFile(fname string, mode int){
+    //manually setting the mode to make testing easier
+    mode = os.O_RDWR
+    file,err := os.OpenFile(fname, mode, 0755)
+    if errorCheck(err){ return }
+
+    //using stat here to get file length 
+    fi,err := file.Stat()
+    if errorCheck(err){ return }
+    //create a slize the size of the file so that we grab the while file 
+    ficon := make([]byte, fi.Size())
+
+    //read the file, not interested in bytes read
+    //since the size of the buffer = size of the file in bytes
+    _,err = file.Read(ficon)
+    if errorCheck(err){ return }
+    fmt.Println(string(ficon))
+}
+
+func processCall(call string) {
     cindex := strings.Index(call, "(")
     if cindex == -1{
         fmt.Println("Invalid syntax")
@@ -48,7 +67,7 @@ func ProcessCall(call string) {
             fmt.Println("Invalid mode")
             return
         }
-        ReadFile(fname,mode)
+        readFile(fname,mode)
     }else if command == "exit"{
         os.Exit(0)
     }
@@ -70,6 +89,6 @@ func main() {
         //read everything up to the newline(user hitting enter)
         call,_ := reader.ReadString('\n')
         call = strings.Replace(call, "\n", "", -1)
-        ProcessCall(call)
+        processCall(call)
     }
 }
