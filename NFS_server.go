@@ -36,6 +36,9 @@ func readFile(fname string, mode int){
     file,err := os.OpenFile(fname, mode, 0755)
     if errorCheck(err){ return }
 
+    //defer close to make sure file is closed 
+    defer file.Close()
+
     //using stat here to get file length 
     fi,err := file.Stat()
     if errorCheck(err){ return }
@@ -47,6 +50,22 @@ func readFile(fname string, mode int){
     _,err = file.Read(ficon)
     if errorCheck(err){ return }
     fmt.Println(string(ficon))
+}
+//mode == "append" - adds at the ends of the list
+//mode == "replace" - replaces everything after offset with content 
+func writeToFile(fname string, offset int, mode string, content string){
+    fileMode := os.O_RDWR | os.O_APPEND | os.O_CREATE
+    file,err := os.OpenFile(fname, fileMode, 0755)
+    if errorCheck(err){ return }
+    bcon := []byte(content)
+    off := int64(offset)
+    switch mode{
+        case "append":
+            _,err = file.Write(bcon)
+        case "replace":
+            _,err = file.WriteAt(bcon,off)
+    }
+    if errorCheck(err){ return }
 }
 
 func processCall(call string) {
@@ -64,6 +83,15 @@ func processCall(call string) {
                 return
             }
             readFile(fname,mode)
+        case "write":
+            fname := args[1]
+            offset,err := strconv.Atoi(args[2])
+            mode := args[3]
+            content := args[4]
+            if err != nil{
+                fmt.Println("Invalid offset")
+            }
+            writeToFile(fname,offset,mode,content)
     }
 }
 
