@@ -30,9 +30,9 @@ func errorCheck(e error) bool {
     return false
 }
 
-func readFile(fname string, mode int){
+func readFile(fname string){
     //manually setting the mode to make testing easier
-    mode = os.O_RDWR
+    mode := os.O_RDWR
     file,err := os.OpenFile(fname, mode, 0755)
     if errorCheck(err){ return }
 
@@ -77,12 +77,7 @@ func processCall(call string) {
             os.Exit(0)
         case "read":
             fname := args[1]
-            mode,err := strconv.Atoi(args[2])
-            if err != nil{
-                fmt.Println("Invalid mode")
-                return
-            }
-            readFile(fname,mode)
+            readFile(fname)
         case "write":
             fname := args[1]
             offset,err := strconv.Atoi(args[2])
