@@ -51,19 +51,37 @@ func readFile(fname string){
     if errorCheck(err){ return }
     fmt.Println(string(ficon))
 }
+
+//function to check that the offset isn't larger than the file size
+func checkOffset(offset int64, file *os.File) int64{
+    fs,err := file.Stat()
+    if errorCheck(err){ return int64(0) }
+    size := fs.Size()
+    if offset > size{
+        return size
+    }
+    return offset
+}
+
 //mode == "append" - adds at the ends of the list
 //mode == "replace" - replaces everything after offset with content 
-func writeToFile(fname string, offset int, mode string, content string){
-    fileMode := os.O_RDWR | os.O_APPEND | os.O_CREATE
+func writeToFile(fname string, offset int64, mode string, content []byte){
+    fileMode := os.O_RDWR | os.O_CREATE
+    //add in the append flag if we're appending to the file
+    if mode == "append"{ fileMode = fileMode | os.O_APPEND }
+
     file,err := os.OpenFile(fname, fileMode, 0755)
     if errorCheck(err){ return }
-    bcon := []byte(content)
-    off := int64(offset)
+    defer file.Close()
+
+        //convert the content and offset to []byte and int64 
+    //to work with the file functions 
     switch mode{
         case "append":
-            _,err = file.Write(bcon)
+            _,err = file.Write(content)
         case "replace":
-            _,err = file.WriteAt(bcon,off)
+            offset = checkOffset(offset,file)
+            _,err = file.WriteAt(content,offset)
     }
     if errorCheck(err){ return }
 }
@@ -80,9 +98,14 @@ func processCall(call string) {
             readFile(fname)
         case "write":
             fname := args[1]
-            offset,err := strconv.Atoi(args[2])
+            off,err := strconv.Atoi(args[2])
+            if err != nil{
+                fmt.Println("Invalid offset")
+                return
+            }
+            offset := int64(off)
             mode := args[3]
-            content := args[4]
+            content := []byte(args[4])
             if err != nil{
                 fmt.Println("Invalid offset")
             }
@@ -95,7 +118,7 @@ func main() {
     reader := bufio.NewReader(os.Stdin)
     fmt.Println("Enter command:")
     for {
-        fmt.Print("->")
+        fmt.Print("-> ")
         //read everything up to the newline(user hitting enter)
         call,_ := reader.ReadString('\n')
         call = strings.Replace(call, "\n", "", -1)
