@@ -5,6 +5,7 @@ import (
     "os"
     "strings"
     "strconv"
+    "net"
 )
 
 
@@ -22,6 +23,9 @@ import (
     write   2
     execute 4
 */
+//port to use for the NFS server, chosen at random
+var port string = ":1337"
+
 func errorCheck(e error) bool {
     if e != nil{
         fmt.Println(e)
@@ -112,9 +116,35 @@ func processCall(call string) {
             writeToFile(fname,offset,mode,content)
     }
 }
+//function that accepts incoming connections
+func acceptClients(server net.Listener){
+    fmt.Println("Shh, listening...")
+    for{
+        client,err := server.Accept()
+        if errorCheck(err){ return }
+        fmt.Println("A client has connected.")
+        go handleClient(client)
+    }
+}
+
+func handleClient(client net.Conn){
+    //create the buffer to read messages from NfS clients
+    readbuf := bufio.NewScanner(client)
+    //buffer to respond to NFS clients
+    for readbuf.Scan(){
+        call := readbuf.Text()
+        fmt.Println(call)
+        processCall(call)
+    }
+}
 
 //starter function
 func main() {
+    server,err := net.Listen("tcp",port)
+    if errorCheck(err){ return }
+    acceptClients(server)
+
+    /*
     reader := bufio.NewReader(os.Stdin)
     fmt.Println("Enter command:")
     for {
@@ -123,5 +153,5 @@ func main() {
         call,_ := reader.ReadString('\n')
         call = strings.Replace(call, "\n", "", -1)
         processCall(call)
-    }
+    */
 }
