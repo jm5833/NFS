@@ -34,7 +34,7 @@ func errorCheck(e error) bool {
     return false
 }
 
-func readFile(fname string){
+func readFile(fname string, client net.Conn){
     //manually setting the mode to make testing easier
     mode := os.O_RDWR
     file,err := os.OpenFile(fname, mode, 0755)
@@ -54,6 +54,8 @@ func readFile(fname string){
     _,err = file.Read(ficon)
     if errorCheck(err){ return }
     fmt.Println(string(ficon))
+    //after reading the file, send the read file over to the client 
+    client.Write(ficon)
 }
 
 //function to check that the offset isn't larger than the file size
@@ -78,7 +80,7 @@ func writeToFile(fname string, offset int64, mode string, content []byte){
     if errorCheck(err){ return }
     defer file.Close()
 
-        //convert the content and offset to []byte and int64 
+    //convert the content and offset to []byte and int64 
     //to work with the file functions 
     switch mode{
         case "append":
@@ -90,7 +92,7 @@ func writeToFile(fname string, offset int64, mode string, content []byte){
     if errorCheck(err){ return }
 }
 
-func processCall(call string) {
+func processCall(call string, client net.Conn) {
     if len(call) <= 0{ return }
     args := strings.Split(call, " ")
     command := args[0]
@@ -99,7 +101,7 @@ func processCall(call string) {
             os.Exit(0)
         case "read":
             fname := args[1]
-            readFile(fname)
+            readFile(fname, client)
         case "write":
             fname := args[1]
             off,err := strconv.Atoi(args[2])
@@ -134,7 +136,7 @@ func handleClient(client net.Conn){
     for readbuf.Scan(){
         call := readbuf.Text()
         fmt.Println(call)
-        processCall(call)
+        processCall(call,client)
     }
 }
 
