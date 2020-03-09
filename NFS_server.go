@@ -47,13 +47,13 @@ func readFile(fname string, client net.Conn){
     fi,err := file.Stat()
     if errorCheck(err){ return }
     //create a slize the size of the file so that we grab the while file 
-    ficon := make([]byte, fi.Size())
-
+    ficon := make([]byte, fi.Size()+1)
     //read the file, not interested in bytes read
     //since the size of the buffer = size of the file in bytes
     _,err = file.Read(ficon)
     if errorCheck(err){ return }
     fmt.Println(string(ficon))
+    ficon = append(ficon,'\n')
     //after reading the file, send the read file over to the client 
     client.Write(ficon)
 }
